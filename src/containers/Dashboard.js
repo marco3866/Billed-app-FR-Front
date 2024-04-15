@@ -69,13 +69,31 @@ export const getStatus = (index) => {
 
 export default class {
   constructor({ document, onNavigate, store, bills, localStorage }) {
-    this.document = document
-    this.onNavigate = onNavigate
-    this.store = store
-    $('#arrow-icon1').click((e) => this.handleShowTickets(e, bills, 1))
-    $('#arrow-icon2').click((e) => this.handleShowTickets(e, bills, 2))
-    $('#arrow-icon3').click((e) => this.handleShowTickets(e, bills, 3))
-    new Logout({ localStorage, onNavigate })
+    // Assignation des propriétés de l'instance avec les paramètres du constructeur
+    this.document = document;
+    this.onNavigate = onNavigate;
+    this.store = store;
+    
+    // Initialisation d'un objet pour garder une trace des écouteurs d'événements
+    this.initializedListeners = new Set(); // Utilisation d'un Set
+
+    // Attachement des écouteurs d'événements pour chaque catégorie de notes de frais.
+    // Les fonctions fléchées assurent que le contexte de 'this' reste lié à l'instance de la classe.
+    this.initializeShowTicketsListener('#arrow-icon1', bills, 1);
+    this.initializeShowTicketsListener('#arrow-icon2', bills, 2);
+    this.initializeShowTicketsListener('#arrow-icon3', bills, 3);
+    
+    // Instanciation du système de déconnexion
+    new Logout({ localStorage, onNavigate });
+  }
+
+  // Cette nouvelle méthode initialise les écouteurs d'événements pour les flèches de catégories.
+  // Elle s'assure de n'ajouter l'écouteur qu'une seule fois pour éviter les doublons.
+  initializeShowTicketsListener(selector, bills, index) {
+    if (!this.initializedListeners[selector]) {
+      $(selector).click((e) => this.handleShowTickets(e, bills, index));
+      this.initializedListeners[selector] = true;
+    }
   }
 
   handleClickIconEye = () => {
@@ -131,28 +149,25 @@ export default class {
   }
 
   handleShowTickets(e, bills, index) {
-    if (this.counter === undefined || this.index !== index) this.counter = 0
-    if (this.index === undefined || this.index !== index) this.index = index
-    if (this.counter % 2 === 0) {
-      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(0deg)'})
-      $(`#status-bills-container${this.index}`)
-        .html(cards(filteredBills(bills, getStatus(this.index))))
-      this.counter ++
-    } else {
-      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(90deg)'})
-      $(`#status-bills-container${this.index}`)
-        .html("")
-      this.counter ++
-    }
+    const status = getStatus(index);
+    const billsToDisplay = filteredBills(bills, status);
 
-    bills.forEach(bill => {
-      $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
-    })
+    // Mise à jour de l'affichage des billets
+    $(`#arrow-icon${index}`).css({ transform: this.counter % 2 === 0 ? 'rotate(0deg)' : 'rotate(90deg)' });
+    $(`#status-bills-container${index}`).html(cards(billsToDisplay));
+    
+    // Attacher les écouteurs d'événements aux billets nouvellement affichés
+    billsToDisplay.forEach(bill => {
+      const billElementId = `#open-bill${bill.id}`;
+      if (!this.initializedListeners.has(billElementId)) {
+        this.initializedListeners.add(billElementId);
+        $(billElementId).click((e) => this.handleEditTicket(e, bill, bills));
+      }
+    });
 
-    return bills
-
+    this.counter++;
+    return billsToDisplay;
   }
-
   getBillsAllUsers = () => {
     if (this.store) {
       return this.store

@@ -19,9 +19,21 @@ const row = (bill) => {
     `)
   }
 
-const rows = (data) => {
-  return (data && data.length) ? data.map(bill => row(bill)).join("") : ""
-}
+  const rows = (data) => {
+    // Vérification si `data` est présent et non vide.
+    if (data && data.length) {
+      // Tri des notes de frais par date dans l'ordre décroissant.
+      // La conversion des dates en formats standard permet le tri correct.
+      const sortedBills = data.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA;
+      });
+      // Création des lignes de tableau pour chaque note de frais triée.
+      return sortedBills.map(bill => row(bill)).join("");
+    }
+    return "";
+  }  
 
 export default ({ data: bills, loading, error }) => {
   
