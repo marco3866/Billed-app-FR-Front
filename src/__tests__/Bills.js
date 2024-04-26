@@ -56,6 +56,20 @@ describe("Given I am connected as an employee", () => {
 
       expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH["NewBill"]);
     });
+    test("Then it should fetch bills from the mock store", async () => {
+      const billsContainer = new Bills({
+        document,
+        onNavigate: () => {},
+        store: mockStore,
+        localStorage: window.localStorage,
+      });
+    
+      const bills = await billsContainer.getBills();
+    
+      expect(bills.length).toBe(4);
+      expect(bills[0].date).toEqual(expect.any(String));
+      expect(bills[0].status).toEqual(expect.any(String));
+    });
     test("Then bill icon in vertical layout should be highlighted", async () => {
       window.onNavigate(ROUTES_PATH.Bills);
       await waitFor(() => screen.getByTestId("icon-window"));
