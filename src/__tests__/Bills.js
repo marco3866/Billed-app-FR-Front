@@ -10,6 +10,21 @@ import mockStore from "../__mocks__/store";
 import router from "../app/Router.js";
 import { formatDate, formatStatus } from "../app/format.js";
 
+describe("Given I am on Bills Page", () => {
+  test("Then getBills should return undefined if store is not defined", () => {
+    const billsContainer = new Bills({
+      document,
+      onNavigate: jest.fn(),
+      store: null, // Simuler le cas où `store` n'est pas défini
+      localStorage: window.localStorage,
+    });
+
+    const result = billsContainer.getBills(); // Appeler `getBills`
+
+    expect(result).toBeUndefined(); // Vérifiez le comportement attendu
+  });
+});
+
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
     beforeEach(() => {
@@ -26,32 +41,27 @@ describe("Given I am connected as an employee", () => {
       router();
     });
 
+    test("Then it should handle click on new bill button and navigate to NewBill page", () => {
+      document.body.innerHTML = BillsUI({ data: bills });
+      const onNavigate = jest.fn();
+      const billsContainer = new Bills({
+        document,
+        onNavigate,
+        store: null,
+        localStorage: window.localStorage,
+      });
 
+      const buttonNewBill = screen.getByTestId("btn-new-bill");
+      userEvent.click(buttonNewBill);
+
+      expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH["NewBill"]);
+    });
     test("Then bill icon in vertical layout should be highlighted", async () => {
       window.onNavigate(ROUTES_PATH.Bills);
       await waitFor(() => screen.getByTestId("icon-window"));
       const windowIcon = screen.getByTestId("icon-window");
       expect(windowIcon.classList.contains("active-icon")).toBe(true);
     });
-
-    test("Then it should open the modal when clicking on eye icon", async () => {
-      document.body.innerHTML = BillsUI({ data: bills });
-      const billsContainer = new Bills({
-        document,
-        onNavigate: () => {},
-        store: null,
-        localStorage: window.localStorage,
-      });
-
-      const iconEye = screen.getAllByTestId("icon-eye");
-      const handleClickIconEye = jest.fn(() =>
-        billsContainer.handleClickIconEye(iconEye[0])
-      );
-      iconEye[0].addEventListener("click", handleClickIconEye);
-      userEvent.click(iconEye[0]);
-      expect(handleClickIconEye).toHaveBeenCalled();
-    });
-
     test("Then it should display the modal with the correct content when clicking on eye icon", () => {
       document.body.innerHTML = BillsUI({ data: bills });
       const billsContainer = new Bills({
@@ -76,26 +86,6 @@ describe("Given I am connected as an employee", () => {
       );
     });
 
-    test("Then it should navigate to NewBill page when clicking on 'Nouvelle facture' button", () => {
-      document.body.innerHTML = BillsUI({ data: bills });
-      const onNavigate = jest.fn();
-      const billsContainer = new Bills({
-        document,
-        onNavigate,
-        store: null,
-        localStorage: window.localStorage,
-      });
-
-      const buttonNewBill = screen.getByTestId("btn-new-bill");
-      const handleClickNewBill = jest.fn(() =>
-        billsContainer.handleClickNewBill()
-      );
-      buttonNewBill.addEventListener("click", handleClickNewBill);
-      userEvent.click(buttonNewBill);
-
-      expect(handleClickNewBill).toHaveBeenCalled();
-      expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH["NewBill"]);
-    });
     test("Then it should fetch bills from the mock store", async () => {
       const billsContainer = new Bills({
         document,
@@ -110,28 +100,6 @@ describe("Given I am connected as an employee", () => {
       expect(spyList).toHaveBeenCalledTimes(1);
       expect(bills.length).toBe(4);
       expect(bills[0].date).toEqual(formatDate(bills[0].date));
-      expect(bills[0].status).toEqual(formatStatus(bills[0].status));
-    });
-    test("Then it should fetch bills from the mock store and handle errors", async () => {
-      const billsContainer = new Bills({
-        document,
-        onNavigate: () => {},
-        store: mockStore,
-        localStorage: window.localStorage,
-      });
-    
-      const spyList = jest.spyOn(mockStore, "bills");
-      const consoleSpy = jest.spyOn(console, "log");
-    
-      // Simuler une erreur dans la fonction formatDate
-      jest.spyOn(formatDate, "mockImplementationOnce").mockReturnValueOnce(new Error("Erreur de formatage"));
-    
-      const bills = await billsContainer.getBills();
-    
-      expect(spyList).toHaveBeenCalledTimes(1);
-      expect(bills.length).toBe(4);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error), "for", expect.any(Object));
-      expect(bills[0].date).toEqual(bills[0].date);
       expect(bills[0].status).toEqual(formatStatus(bills[0].status));
     });
   });

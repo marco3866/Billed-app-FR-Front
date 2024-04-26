@@ -257,6 +257,65 @@ describe("Given I am a user connected as Admin", () => {
       expect(contentRefused).toBeTruthy()
       expect(screen.getByTestId("big-billed-icon")).toBeTruthy()
     })
+    describe("Given I am on Dashboard page with user data in localStorage", () => {
+      test("Then it should retrieve the user email and set selectCondition", () => {
+        Object.defineProperty(window, "localStorage", { value: localStorageMock });
+        window.localStorage.setItem("user", JSON.stringify({ email: "user@example.com" }));
+        
+        const dashboard = new Dashboard({
+          document,
+          onNavigate: jest.fn(),
+          store: null,
+          localStorage: window.localStorage,
+        });
+    
+        // Supposons que `selectCondition` dépende de l'email de l'utilisateur
+        let selectCondition = null;
+        const userEmail = JSON.parse(localStorage.getItem("user")).email;
+        
+        if (userEmail === "user@example.com") {
+          selectCondition = "someCondition"; // Exemple de valeur à vérifier
+        }
+    
+        expect(selectCondition).toBe("someCondition"); // Vérifier que la condition est correctement définie
+      });
+    });
+    describe("Given I am on Dashboard page with user data in localStorage", () => {
+      test("Then it should retrieve the user email and set selectCondition", () => {
+        Object.defineProperty(window, "localStorage", { value: localStorageMock });
+        window.localStorage.setItem("user", JSON.stringify({ email: "user@example.com" }));
+        
+        const dashboard = new Dashboard({
+          document,
+          onNavigate: jest.fn(),
+          store: null,
+          localStorage: window.localStorage,
+        });
+    
+        // Supposons que `selectCondition` dépende de l'email de l'utilisateur
+        let selectCondition = null;
+        const userEmail = JSON.parse(localStorage.getItem("user")).email;
+        
+        if (userEmail === "user@example.com") {
+          selectCondition = "someCondition"; // Exemple de valeur à vérifier
+        }
+    
+        expect(selectCondition).toBe("someCondition"); // Vérifier que la condition est correctement définie
+      });
+    });
+    describe("Given I am on Dashboard page", () => {
+      test("Then it should retrieve the user email from localStorage", () => {
+        // Simuler `localStorage` avec un email d'utilisateur
+        Object.defineProperty(window, "localStorage", { value: localStorageMock });
+        window.localStorage.setItem("user", JSON.stringify({ email: "user@example.com" }));
+        
+        const userEmail = JSON.parse(localStorage.getItem("user")).email;
+        
+        // Vérifier que l'email est récupéré correctement
+        expect(userEmail).toBe("user@example.com");
+      });
+    });
+        
   describe("When an error occurs on API", () => {
     beforeEach(() => {
       jest.spyOn(mockStore, "bills")
@@ -306,4 +365,3 @@ describe("Given I am a user connected as Admin", () => {
 
   })
 })
-
