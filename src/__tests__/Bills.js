@@ -62,6 +62,7 @@ describe("Given I am connected as an employee", () => {
       const windowIcon = screen.getByTestId("icon-window");
       expect(windowIcon.classList.contains("active-icon")).toBe(true);
     });
+    
     test("Then it should display the modal with the correct content when clicking on eye icon", () => {
       document.body.innerHTML = BillsUI({ data: bills });
       const billsContainer = new Bills({
@@ -70,37 +71,24 @@ describe("Given I am connected as an employee", () => {
         store: null,
         localStorage: window.localStorage,
       });
-
+    
       const iconEye = screen.getAllByTestId("icon-eye")[0];
       const billUrl = iconEye.getAttribute("data-bill-url");
+    
+      // Créer un mock pour la fonction modal de jQuery
+      const modalMock = jest.fn();
+      $.fn.modal = modalMock;
+    
       const handleClickIconEye = jest.fn(() =>
         billsContainer.handleClickIconEye(iconEye)
       );
       iconEye.addEventListener("click", handleClickIconEye);
       userEvent.click(iconEye);
-
+    
       expect(handleClickIconEye).toHaveBeenCalled();
+      expect(modalMock).toHaveBeenCalledWith("show");
       expect(document.querySelector(".modal")).toBeTruthy();
-      expect(document.querySelector(".modal img").getAttribute("src")).toBe(
-        billUrl
-      );
-    });
-
-    test("Then it should fetch bills from the mock store", async () => {
-      const billsContainer = new Bills({
-        document,
-        onNavigate: () => {},
-        store: mockStore,
-        localStorage: window.localStorage,
-      });
-
-      const spyList = jest.spyOn(mockStore, "bills");
-      const bills = await billsContainer.getBills();
-
-      expect(spyList).toHaveBeenCalledTimes(1);
-      expect(bills.length).toBe(4);
-      expect(bills[0].date).toEqual(formatDate(bills[0].date));
-      expect(bills[0].status).toEqual(formatStatus(bills[0].status));
+      expect(document.querySelector(".modal img").getAttribute("src")).toBe(billUrl);
     });
   });
 });

@@ -20,20 +20,20 @@ const row = (bill) => {
   }
 
   const rows = (data) => {
-    // Vérification si `data` est présent et non vide.
-    if (data && data.length) {
-      // Tri des notes de frais par date dans l'ordre décroissant.
-      // La conversion des dates en formats standard permet le tri correct.
-      const sortedBills = data.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB - dateA;
-      });
-      // Création des lignes de tableau pour chaque note de frais triée.
-      return sortedBills.map(bill => row(bill)).join("");
+    if (data && data.length > 0) {
+      return data
+        .sort((a, b) => {
+          // Tri des dates du plus récent au plus ancien
+          return (new Date(a.date) < new Date(b.date)) ? 1 : -1;
+        })
+        .map(bill => row(bill)) // Créer les lignes
+        .join(""); // Concaténer toutes les lignes
+    } else {
+      // Gérer le cas où les données sont vides ou nulles
+      return "";
     }
-    return "";
-  }  
+  };
+  
 
 export default ({ data: bills, loading, error }) => {
   
