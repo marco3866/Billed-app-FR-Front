@@ -90,11 +90,8 @@ export default class {
   // Cette nouvelle méthode initialise les écouteurs d'événements pour les flèches de catégories.
   // Elle s'assure de n'ajouter l'écouteur qu'une seule fois pour éviter les doublons.
   initializeShowTicketsListener(selector, bills, index) {
-    if (!this.initializedListeners[selector]) {
-      $(selector).click((e) => this.handleShowTickets(e, bills, index));
-      this.initializedListeners[selector] = true;
-    }
-  }
+    $(selector).off('click').click((e) => this.handleShowTickets(e, bills, index));
+}
 
   handleClickIconEye = () => {
     const billUrl = $('#icon-eye-d').attr("data-bill-url")
@@ -151,20 +148,28 @@ export default class {
   handleShowTickets(e, bills, index) {
     const status = getStatus(index);
     const billsToDisplay = filteredBills(bills, status);
-
-    // Mise à jour de l'affichage des billets
-    $(`#arrow-icon${index}`).css({ transform: this.counter % 2 === 0 ? 'rotate(0deg)' : 'rotate(90deg)' });
+  
+    // Vérifier si les billets sont déjà affichés
+    const isTicketsDisplayed = $(`#status-bills-container${index}`).children().length > 0;
+  
+    // Si les billets sont déjà affichés, les masquer
+    if (isTicketsDisplayed) {
+      $(`#arrow-icon${index}`).css({ transform: 'rotate(0deg)' });
+      $(`#status-bills-container${index}`).html('');
+      this.counter++;
+      return [];
+    }
+  
+    // Sinon, afficher les billets
+    $(`#arrow-icon${index}`).css({ transform: 'rotate(90deg)' });
     $(`#status-bills-container${index}`).html(cards(billsToDisplay));
     
     // Attacher les écouteurs d'événements aux billets nouvellement affichés
     billsToDisplay.forEach(bill => {
       const billElementId = `#open-bill${bill.id}`;
-      if (!this.initializedListeners.has(billElementId)) {
-        this.initializedListeners.add(billElementId);
-        $(billElementId).click((e) => this.handleEditTicket(e, bill, bills));
-      }
+      $(billElementId).off('click').on('click', (e) => this.handleEditTicket(e, bill, bills));
     });
-
+  
     this.counter++;
     return billsToDisplay;
   }

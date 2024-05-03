@@ -155,6 +155,27 @@ test("Then submitting the form should call handleSubmit and update the bill", ()
   expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH['Bills']); // Navigation vers la page des factures
   expect(updateBill).toHaveBeenCalled(); // La fonction d'update doit être appelée
 });
+test("Then it should log an error if creating a new bill fails", async () => {
+  const store = mockStore;
+  const createMock = jest.fn().mockRejectedValue(new Error("Failed to create bill"));
+  store.bills = jest.fn().mockReturnValue({ create: createMock });
+
+  const newBill = new NewBill({
+    document,
+    onNavigate: jest.fn(),
+    store,
+    localStorage: window.localStorage,
+  });
+
+  const validFile = new File(["file content"], "test.jpg", { type: "image/jpeg" });
+  const event = { preventDefault: jest.fn(), target: { value: "path/to/test.jpg", files: [validFile] } };
+
+  console.error = jest.fn(); // Espionner la fonction console.error
+
+  await newBill.handleChangeFile(event);
+
+  expect(console.error).toHaveBeenCalledWith(expect.any(Error)); // Vérifier que console.error a été appelé avec une erreur
+});
     test("Then submitting an incorrect file format should not proceed", () => {
       const newBill = new NewBill({
         document,
