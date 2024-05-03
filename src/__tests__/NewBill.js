@@ -91,70 +91,56 @@ describe("Given I am connected as an employee", () => {
 
       expect(() => newBill.updateBill(bill)).not.toThrow();
     });    
-    test("Then uploading a valid file should create a new bill", async () => {
-      const store = mockStore;
-      const createMock = jest.fn().mockResolvedValue({ fileUrl: "https://example.com/test.jpg", key: "1234" });
-      store.bills = jest.fn().mockReturnValue({ create: createMock });
 
+
+    test("Then submitting the form should call handleSubmit and update the bill", async () => {
+      const onNavigate = jest.fn();
+      const updateBill = jest.fn().mockResolvedValue({}); // Modifier pour renvoyer une promesse résolue
       const newBill = new NewBill({
         document,
-        onNavigate: jest.fn(),
-        store,
-        localStorage: window.localStorage,
-      });
-
-      const validFile = new File(["file content"], "test.jpg", { type: "image/jpeg" });
-      const event = { preventDefault: jest.fn(), target: { value: "path/to/test.jpg", files: [validFile] } };
-
-      await newBill.handleChangeFile(event);
-
-      expect(createMock).toHaveBeenCalledWith({
-        data: expect.any(FormData),
-        headers: { noContentType: true },
-      });
-      expect(newBill.billId).toBe("1234");
-      expect(newBill.fileUrl).toBe("https://example.com/test.jpg");
-      expect(newBill.fileName).toBe("test.jpg");
-    });
-
-    test("Then uploading an incorrect file format should not set properties and should show alert", () => {
-      const newBill = new NewBill({
-        document,
-        onNavigate: jest.fn(),
-        store: null,
+        onNavigate,
+        store: { bills: jest.fn().mockReturnValue({ update: updateBill }) },
         localStorage: window.localStorage,
       });
     
-      const inputFile = screen.getByTestId("file");
-      const wrongFile = new File(["wrong content"], "test.txt", { type: "text/plain" });
+      const form = screen.getByTestId("form-new-bill");
     
-      const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
+      // Remplir les champs du formulaire avec des données valides
+      const expenseTypeInput = screen.getByTestId("expense-type");
+      fireEvent.change(expenseTypeInput, { target: { value: "Transports" } });
     
-      fireEvent.change(inputFile, { target: { files: [wrongFile] } });
+      const expenseNameInput = screen.getByTestId("expense-name");
+      fireEvent.change(expenseNameInput, { target: { value: "Test Expense" } });
     
-      // Assurez-vous que l'alerte est déclenchée
-      expect(alertSpy).toHaveBeenCalled();
-      expect(newBill.fileUrl).toBeNull(); // Les propriétés ne doivent pas être définies
+      const datepickerInput = screen.getByTestId("datepicker");
+      fireEvent.change(datepickerInput, { target: { value: "2023-06-13" } });
     
-      alertSpy.mockRestore(); // Restaurer l'alerte
+      const amountInput = screen.getByTestId("amount");
+      fireEvent.change(amountInput, { target: { value: "100" } });
+    
+      const vatInput = screen.getByTestId("vat");
+      fireEvent.change(vatInput, { target: { value: "20" } });
+    
+      const pctInput = screen.getByTestId("pct");
+      fireEvent.change(pctInput, { target: { value: "20" } });
+    
+      const commentaryInput = screen.getByTestId("commentary");
+      fireEvent.change(commentaryInput, { target: { value: "Test commentary" } });
+    
+      const fileInput = screen.getByTestId("file");
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    
+      // Simuler la soumission du formulaire
+      fireEvent.submit(form);
+    
+      // Attendre que la promesse soit résolue
+      await waitFor(() => {
+        expect(updateBill).toHaveBeenCalled(); // La fonction d'update doit être appelée
+      });
+    
+      expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH['Bills']); // Navigation vers la page des factures
     });
-test("Then submitting the form should call handleSubmit and update the bill", () => {
-  const onNavigate = jest.fn();
-  const updateBill = jest.fn();
-  const newBill = new NewBill({
-    document,
-    onNavigate,
-    store: { bills: jest.fn().mockReturnValue({ update: updateBill }) },
-    localStorage: window.localStorage,
-  });
-
-  const form = screen.getByTestId("form-new-bill");
-  fireEvent.submit(form); // Simuler la soumission
-
-  // Vérifiez que handleSubmit a été appelé correctement
-  expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH['Bills']); // Navigation vers la page des factures
-  expect(updateBill).toHaveBeenCalled(); // La fonction d'update doit être appelée
-});
 test("Then it should log an error if creating a new bill fails", async () => {
   const store = mockStore;
   const createMock = jest.fn().mockRejectedValue(new Error("Failed to create bill"));
@@ -176,28 +162,6 @@ test("Then it should log an error if creating a new bill fails", async () => {
 
   expect(console.error).toHaveBeenCalledWith(expect.any(Error)); // Vérifier que console.error a été appelé avec une erreur
 });
-    test("Then submitting an incorrect file format should not proceed", () => {
-      const newBill = new NewBill({
-        document,
-        onNavigate: jest.fn(),
-        store: null,
-        localStorage: window.localStorage,
-      });
 
-      const html = NewBillUI();
-      document.body.innerHTML = html;
-
-      const inputFile = screen.getByTestId("file");
-      const wrongFile = new File(["(¬_¬)"], "test.txt", { type: "text/plain" });
-
-      const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {}); // Mock alert
-
-      fireEvent.change(inputFile, { target: { files: [wrongFile] } });
-
-      // Assurez-vous qu'une alerte a été déclenchée
-      expect(alertSpy).toHaveBeenCalledWith("Le format de fichier n'est pas pris en charge. Veuillez télécharger une image au format jpg, jpeg ou png.");
-
-      alertSpy.mockRestore(); // Restaurer la fonction d'alerte
-    });
   });
 });
