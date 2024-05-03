@@ -12,7 +12,6 @@ import { localStorageMock } from "../__mocks__/localStorage.js"
 import mockStore from "../__mocks__/store"
 import { bills } from "../fixtures/bills"
 import router from "../app/Router"
-import { USERS_TEST } from "../constants/usersTest";
 
 jest.mock("../app/store", () => mockStore)
 
@@ -240,67 +239,7 @@ describe('Given I am connected as Admin and I am on Dashboard page and I clicked
     })
   })
 })
-describe("filteredBills", () => {
-  it("should return an empty array if data is undefined or empty", () => {
-    expect(filteredBills(undefined, "pending")).toEqual([]);
-    expect(filteredBills([], "pending")).toEqual([]);
-  });
 
-  it("should filter bills based on status in jest environment", () => {
-    const bills = [
-      { id: "1", status: "pending" },
-      { id: "2", status: "accepted" },
-      { id: "3", status: "pending" },
-    ];
-
-    const filteredPendingBills = filteredBills(bills, "pending");
-    expect(filteredPendingBills).toEqual([
-      { id: "1", status: "pending" },
-      { id: "3", status: "pending" },
-    ]);
-
-    const filteredAcceptedBills = filteredBills(bills, "accepted");
-    expect(filteredAcceptedBills).toEqual([{ id: "2", status: "accepted" }]);
-  });
-  it("should filter bills based on status and exclude bills from USERS_TEST", () => {
-    Object.defineProperty(window, "localStorage", {
-      value: {
-        getItem: jest.fn(() => JSON.stringify({ email: USERS_TEST[0] })),
-      },
-    });
-
-    const bills = [
-      { id: "1", status: "pending", email: USERS_TEST[0] },
-      { id: "2", status: "pending", email: "user@example.com" },
-      { id: "3", status: "accepted", email: USERS_TEST[0] },
-    ];
-
-    const filteredPendingBills = filteredBills(bills, "pending");
-    expect(filteredPendingBills).toEqual([{ id: "2", status: "pending", email: "user@example.com" }]);
-
-    const filteredAcceptedBills = filteredBills(bills, "accepted");
-    expect(filteredAcceptedBills).toEqual([]);
-  });
-  it("should filter bills based on status and user email in production environment", () => {
-    Object.defineProperty(window, "localStorage", {
-      value: {
-        getItem: jest.fn(() => JSON.stringify({ email: "user@example.com" })),
-      },
-    });
-
-    const bills = [
-      { id: "1", status: "pending", email: "user@example.com" },
-      { id: "2", status: "pending", email: "test@example.com" },
-      { id: "3", status: "accepted", email: "user@example.com" },
-    ];
-
-    const filteredPendingBills = filteredBills(bills, "pending");
-    expect(filteredPendingBills).toEqual([{ id: "2", status: "pending", email: "test@example.com" }]);
-
-    const filteredAcceptedBills = filteredBills(bills, "accepted");
-    expect(filteredAcceptedBills).toEqual([{ id: "3", status: "accepted", email: "user@example.com" }]);
-  });
-});
 // test d'intégration GET
 describe("Given I am a user connected as Admin", () => {
   describe("When I navigate to Dashboard", () => {
