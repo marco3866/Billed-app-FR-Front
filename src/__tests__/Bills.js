@@ -27,18 +27,15 @@ describe("Given I am on Bills Page", () => {
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
-    beforeEach(() => {
-      Object.defineProperty(window, "localStorage", {
-        value: localStorageMock,
-      });
-      window.localStorage.setItem(
-        "user",
-        JSON.stringify({ type: "Employee" })
-      );
+    beforeEach(async () => {
+      Object.defineProperty(window, "localStorage", { value: localStorageMock });
+      window.localStorage.setItem("user", JSON.stringify({ type: "Employee" }));
+      document.body.innerHTML = ''; // Assurez-vous de réinitialiser le contenu du body avant chaque test
       const root = document.createElement("div");
       root.setAttribute("id", "root");
-      document.body.append(root);
+      document.body.appendChild(root);
       router();
+      await new Promise(resolve => setTimeout(resolve, 0)); // Simulez un délai pour permettre au DOM de se mettre à jour
     });
 
     test("Then it should handle click on new bill button and navigate to NewBill page", () => {
@@ -72,7 +69,7 @@ describe("Given I am connected as an employee", () => {
     });
     test("Then bill icon in vertical layout should be highlighted", async () => {
       window.onNavigate(ROUTES_PATH.Bills);
-      await waitFor(() => screen.getByTestId("icon-window"));
+      await waitFor(() => expect(screen.getByTestId("icon-window")).toBeTruthy());
       const windowIcon = screen.getByTestId("icon-window");
       expect(windowIcon.classList.contains("active-icon")).toBe(true);
     });
